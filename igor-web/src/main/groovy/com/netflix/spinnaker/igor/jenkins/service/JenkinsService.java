@@ -183,8 +183,13 @@ public class JenkinsService implements BuildOperations, BuildProperties {
   @Override
   public int triggerBuildWithParameters(String job, Map<String, String> queryParameters) {
     Response response = buildWithParameters(job, queryParameters);
-    if (response.getStatus() != 201) {
-      throw new BuildJobError("Received a non-201 status when submitting job '" + job + "'");
+    if (response.getStatus() != 201 && response.getStatus() != 303) {
+      throw new BuildJobError(
+          "Received invalid status '"
+              + response.getStatus()
+              + "' when submitting job '"
+              + job
+              + "'");
     }
 
     log.info("Submitted build job '{}'", kv("job", job));
@@ -249,7 +254,18 @@ public class JenkinsService implements BuildOperations, BuildProperties {
 
   public Response buildWithParameters(String jobName, Map<String, String> queryParams) {
     return circuitBreaker.executeSupplier(
-        () -> jenkinsClient.buildWithParameters(encode(jobName), queryParams, "", getCrumb()));
+        () -> {
+          try {
+            return jenkinsClient.buildWithParameters(encode(jobName), queryParams, "", getCrumb());
+          } catch (RetrofitError e) {
+            if (e.getKind() == RetrofitError.Kind.HTTP
+                && e.getResponse() != null
+                && e.getResponse().getStatus() == 303) {
+              return e.getResponse();
+            }
+            throw e;
+          }
+        });
   }
 
   @Override

@@ -258,8 +258,8 @@ class BuildController {
           throw new RuntimeException("job : ${job}, passing params to a job which doesn't need them")
         }
 
-        if (response.status != 201) {
-          throw new BuildJobError("Received a non-201 status when submitting job '${job}' to master '${master}'")
+        if (response.status != 201 && response.status != 303) {
+          throw new BuildJobError("Received invalid status '${response.status}' when submitting job '${job}' to master '${master}'")
         }
 
         log.info("Submitted build job '{}'", kv("job", job))

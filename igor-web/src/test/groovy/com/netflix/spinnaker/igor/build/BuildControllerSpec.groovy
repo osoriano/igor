@@ -73,6 +73,7 @@ class BuildControllerSpec extends Specification {
   def JENKINS_SERVICE = 'JENKINS_SERVICE'
   def TRAVIS_SERVICE = 'TRAVIS_SERVICE'
   def HTTP_201 = 201
+  def HTTP_303 = 303
   def BUILD_NUMBER = 123
   def BUILD_ID = 654321
   def QUEUED_JOB_NUMBER = 123456
@@ -259,6 +260,19 @@ class BuildControllerSpec extends Specification {
     given:
     1 * jenkinsService.getJobConfig(JOB_NAME) >> new JobConfig(buildable: true, parameterDefinitionList: [new ParameterDefinition(defaultParameterValue: [name: "name", value: null], description: "description")])
     1 * jenkinsService.buildWithParameters(JOB_NAME, [name: "myName"]) >> new Response("http://test.com", HTTP_201, "", [new Header("Location", "foo/${BUILD_NUMBER}")], null)
+
+    when:
+    MockHttpServletResponse response = mockMvc.perform(put("/masters/${JENKINS_SERVICE}/jobs/${JOB_NAME}")
+      .contentType(MediaType.APPLICATION_JSON).param("name", "myName")).andReturn().response
+
+    then:
+    response.contentAsString == BUILD_NUMBER.toString()
+  }
+
+  void 'trigger a build with parameters to a job with parameters returning 303'() {
+    given:
+    1 * jenkinsService.getJobConfig(JOB_NAME) >> new JobConfig(buildable: true, parameterDefinitionList: [new ParameterDefinition(defaultParameterValue: [name: "name", value: null], description: "description")])
+    1 * jenkinsService.buildWithParameters(JOB_NAME, [name: "myName"]) >> new Response("http://test.com", HTTP_303, "", [new Header("Location", "foo/${BUILD_NUMBER}")], null)
 
     when:
     MockHttpServletResponse response = mockMvc.perform(put("/masters/${JENKINS_SERVICE}/jobs/${JOB_NAME}")

@@ -149,6 +149,23 @@ class JenkinsServiceSpec extends Specification {
         'stopQueuedBuild'     | []
     }
 
+    @Unroll
+    void 'client.buildWithParameters can return 303'() {
+        given:
+        def redirectResponse = RetrofitError.httpError(
+          "http://my.jenkins.net",
+          new Response("http://my.jenkins.net/queue/item/100", 303, "see other", [], null),
+          null,
+          null
+        )
+
+        when:
+        service.buildWithParameters(JOB_UNENCODED, ['key': 'value'])
+
+        then:
+        1 * client.buildWithParameters(JOB_ENCODED, ['key': 'value'], '', null) >> { throw redirectResponse }
+    }
+
     void 'we can read crumbs'() {
         given:
         String jenkinsCrumbResponse = '<hudson><crumb>fb171d526b9cc9e25afe80b356e12cb7</crumb><crumbRequestField>.crumb</crumbRequestField></hudson>"}'

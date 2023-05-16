@@ -138,7 +138,7 @@ class JenkinsConfig {
 
         OkHttpClient client = (jenkinsOkHttpClientProvider != null) ? jenkinsOkHttpClientProvider.provide(host) : new OkHttpClient()
         RequestInterceptor requestInterceptor = (jenkinsRetrofitRequestInterceptorProvider != null) ? jenkinsRetrofitRequestInterceptorProvider.provide(host): RequestInterceptor.NONE
-        OkHttpClient.Builder clientBuilder = client.newBuilder().readTimeout(timeout, TimeUnit.MILLISECONDS)
+        OkHttpClient.Builder clientBuilder = client.newBuilder().readTimeout(timeout, TimeUnit.MILLISECONDS).followRedirects(false)
 
         if (host.skipHostnameVerification) {
           clientBuilder.hostnameVerifier({ hostname, _ ->
